@@ -1,0 +1,14 @@
+.app-wrapper {
+  width: 800px;
+  margin: 0 auto;
+  padding: 10px 0;
+  .paper {
+    padding: 20px 24px;
+    .slider-wrapper {
+      .slider-name {
+        white-space: nowrap;
+        min-width: 100px;
+      }
+    }
+  }
+}
