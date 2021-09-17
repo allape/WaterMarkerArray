@@ -1,5 +1,7 @@
 # Water Marker Array
 
+## [Playground](https://allape.github.io/WaterMarkerArray/index.html)
+
 ### 进度 | Goal
 - √ 基础功能 | Basic functions
 - × i18n
