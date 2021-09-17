@@ -3,8 +3,17 @@
   margin: 0 auto;
   padding: 10px 0;
   .paper {
+    margin-bottom: 10px;
     padding: 20px 24px;
     .slider-wrapper {
+      padding-bottom: 10px;
+      width: 100%;
+      .slider-wrapper {
+        padding-bottom: 0;
+      }
+      .full-width {
+        width: 100%;
+      }
       .slider-name {
         white-space: nowrap;
         min-width: 100px;
