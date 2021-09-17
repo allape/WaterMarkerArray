@@ -51,18 +51,25 @@ const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
   // 获取最长的那个边, 然后以那个长度的两倍值作为实际的文本绘制区域, 这样在旋转的时候就不会出现空白的地方了
   const textBoxWidth = Math.max(cvs.width, cvs.height) * 2
 
+  // 画布高宽一半的值
+  const cvsHalfWidth = cvs.width / 2, cvsHalfHeight = cvs.height / 2
+  // 新的原点
+  const originX = -textBoxWidth / 2, originY = -textBoxWidth / 2
+
+  // 清空内容
+  ctx.fillStyle = '#ffffff'
+  ctx.clearRect(originX + cvsHalfWidth, originY + cvsHalfHeight, textBoxWidth, textBoxWidth)
+
   // 添加图片
   if (data.image) {
     ctx.drawImage(data.image, 0, 0, cvs.width, cvs.height)
   }
+  // 设置当前光标到画布的中心
+  ctx.translate(cvsHalfWidth, cvsHalfHeight)
   // 设置旋转
-  ctx.translate(cvs.width / 2, cvs.height / 2)
   ctx.rotate(data.rotate * Math.PI / 180)
   // 设置当前画笔到实际文本绘制区域的左上角
-  ctx.translate(- textBoxWidth / 2, - textBoxWidth / 2)
-  // 清空内容
-  ctx.fillStyle = '#ffffff'
-  ctx.clearRect(0, 0, textBoxWidth, textBoxWidth)
+  ctx.translate(originX, originY)
 
   // 绘制的内容
   const text = data.text
@@ -160,9 +167,9 @@ export default function App() {
     rowShift: -1,
   })
   // 返回true当数据不同时
-  const compareRenderingData = useCallback(() => {
+  const compareRenderingData = useCallback((overrideRenderingData?: Partial<RenderingData>) => {
     const value = lastRenderingData.value
-    const renderingData = getRenderingData()
+    const renderingData = {...getRenderingData(), ...overrideRenderingData}
     return value.paperSize !== renderingData.paperSize
       || value.precision !== renderingData.precision
       || value.text !== renderingData.text
@@ -184,6 +191,7 @@ export default function App() {
     let requestedNextFrame = false
     try {
       rendering.value = true
+      console.log('render at', new Date().toLocaleTimeString())
       if (!canvas.value) {
         const container = document.getElementById(CanvasContainerID)
         if (container) {
@@ -198,16 +206,19 @@ export default function App() {
       } else {
         const cvs: HTMLCanvasElement = canvas.value!
 
+        const overrideData = {
+          precision: 100,
+        }
         const data = {
           ...getRenderingData(),
-          precision: 100,
+          ...overrideData,
         }
 
         draw(cvs, data)
 
         lastRenderingData.value = data
 
-        if (compareRenderingData()) {
+        if (compareRenderingData(overrideData)) {
           requestedNextFrame = true
           requestAnimationFrame(renderCanvas)
         }
@@ -224,10 +235,11 @@ export default function App() {
   ])
 
   useEffect(() => {
+    renderCanvas().then()
     return () => {
       destroyed.value = true
     }
-  }, [destroyed])
+  }, [renderCanvas, destroyed])
 
   useEffect(() => {
     if (!rendering.value) {
@@ -288,7 +300,7 @@ export default function App() {
         </FormControl>
       </Stack>
       <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-        <TextField className="full-width" label="水印内容" variant="standard" value={text} onChange={e => setTextProxy(e.target.value)} />
+        <TextField fullWidth label="水印内容" variant="standard" value={text} onChange={e => setTextProxy(e.target.value)} />
       </Stack>
       <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
         <FormControl variant="standard" fullWidth>
@@ -299,11 +311,11 @@ export default function App() {
               <MenuItem key={font.label} value={font.value}>{font.label}</MenuItem>)}
           </Select>
         </FormControl>
-        <TextField className="full-width" label="字重" variant="standard"
+        <TextField fullWidth label="字重" variant="standard"
                    value={fontWeight} onChange={e => setFontWeightProxy(e.target.value)} />
       </Stack>
       <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-        <TextField className="full-width" label="字体颜色" variant="standard"
+        <TextField fullWidth label="字体颜色" variant="standard"
                    value={color} onChange={e => setColorProxy(e.target.value)} />
         <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
           <div className="slider-name">字体大小(mm):</div>
@@ -342,14 +354,15 @@ export default function App() {
       </Stack>
       <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
         <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-          <Button onClick={print}>打印</Button>
-          <TextField className="full-width" label="背景图片" variant="standard"
+          <TextField fullWidth label="背景图片" variant="standard"
+                     InputLabelProps={{
+                       shrink: true,
+                     }}
                      type="file" onChange={onFileChange} />
+          <Button onClick={print}>打印</Button>
         </Stack>
       </Stack>
     </Paper>
-    <Paper id={CanvasContainerID}>
-
-    </Paper>
+    <Paper className="canvas-container" id={CanvasContainerID} />
   </div>
 }
