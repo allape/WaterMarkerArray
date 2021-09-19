@@ -6,7 +6,7 @@
 
 ### 进度
 - √ 基础功能 | Basic functions
-- × i18n
+- √ i18n
 
 ### 截图
 ![截图1](public/example-zh.png)
