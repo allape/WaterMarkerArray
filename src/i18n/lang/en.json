@@ -19,6 +19,7 @@
       "rowShiftLabel": "Row Shift"
     },
     "backgroundImage": "Image",
-    "print": "Print"
+    "print": "Print",
+    "download": "Download Image"
   }
 }

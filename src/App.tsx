@@ -1,6 +1,17 @@
-import React, {ChangeEvent, useCallback, useEffect} from 'react'
+import React, {ChangeEvent, useCallback, useEffect, useState} from 'react'
 import './App.scss'
-import {Button, FormControl, InputLabel, MenuItem, Paper, Select, Slider, Stack, TextField} from '@material-ui/core'
+import {
+  Button,
+  FormControl,
+  InputLabel,
+  Menu,
+  MenuItem,
+  Paper,
+  Select,
+  Slider,
+  Stack,
+  TextField,
+} from '@material-ui/core'
 import useStateless, {useStateProxy} from 'react-use-stateless'
 import printJS from 'print-js'
 import {FONT_FAMILIES, INCH2MM, PAPER_TYPE_MAP, PAPER_TYPES, PRINTING_QUALITIES} from './model/printer'
@@ -32,6 +43,11 @@ interface RenderingData {
   rotate: Rotate
   rowShift: RowShift
   image?: HTMLImageElement
+}
+
+interface ContextMenuPosition {
+  left: number;
+  top: number;
 }
 
 const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
@@ -269,7 +285,7 @@ export default function App() {
     }
   }, [setImageProxy])
 
-  const print = useCallback(() => {
+  const getCanvasImageDataURL = useCallback((type: string = 'image/png'): string => {
     const cvs: HTMLCanvasElement = document.createElement('canvas')
     const renderingData = getRenderingData()
 
@@ -278,9 +294,42 @@ export default function App() {
     cvs.height = paper.height / INCH2MM * renderingData.precision
 
     draw(cvs, renderingData)
-
-    printJS(cvs.toDataURL('image/png', 1)!, 'image')
+    return cvs.toDataURL(type, 1)!
   }, [getRenderingData])
+
+  const print = useCallback(() => {
+    printJS(getCanvasImageDataURL(), 'image')
+  }, [getCanvasImageDataURL])
+
+  // region 右键
+
+  const [contextMenu, setContextMenu] = useState<ContextMenuPosition | undefined>()
+  const onContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault()
+    setContextMenu(old => old ? undefined : {
+      left: event.clientX - 2,
+      top: event.clientY - 4,
+    })
+  }, [])
+  const onContextMenuCancel = useCallback(() => {
+    setContextMenu(undefined)
+  }, [])
+
+  const onContextMenuPrint = useCallback(() => {
+    print()
+    onContextMenuCancel()
+  }, [print, onContextMenuCancel])
+
+  const onContextMenuOpenImageOnNewTab = useCallback(() => {
+    const a = document.createElement('a')
+    a.target = '_blank'
+    a.download = `${textProxy.value || 'image'}.png`
+    a.href = getCanvasImageDataURL('image/octet-stream')
+    a.click()
+    onContextMenuCancel()
+  }, [textProxy, getCanvasImageDataURL, onContextMenuCancel])
+
+  // endregion
 
   return <div className="app-wrapper">
     <Paper className={`paper form-wrapper ${t('form.style.i18nClass')}`}>
@@ -366,6 +415,12 @@ export default function App() {
         </Stack>
       </Stack>
     </Paper>
-    <Paper className="canvas-container" id={CanvasContainerID} />
+    <Paper className="canvas-container" id={CanvasContainerID} onContextMenu={onContextMenu} />
+    <Menu open={!!contextMenu} onClose={onContextMenuCancel}
+          anchorReference="anchorPosition"
+          anchorPosition={contextMenu}>
+      <MenuItem onClick={onContextMenuPrint}>{t('form.print')}</MenuItem>
+      <MenuItem onClick={onContextMenuOpenImageOnNewTab}>{t('form.download')}</MenuItem>
+    </Menu>
   </div>
 }

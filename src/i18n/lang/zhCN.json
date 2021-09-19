@@ -19,6 +19,7 @@
       "rowShiftLabel": "水平偏移"
     },
     "backgroundImage": "背景图片",
-    "print": "打印"
+    "print": "打印",
+    "download": "下载图片"
   }
 }
