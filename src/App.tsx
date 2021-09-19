@@ -287,13 +287,7 @@ export default function App() {
 
   const getCanvasImageDataURL = useCallback((type: string = 'image/png'): string => {
     const cvs: HTMLCanvasElement = document.createElement('canvas')
-    const renderingData = getRenderingData()
-
-    const paper = PAPER_TYPE_MAP[renderingData.paperSize]
-    cvs.width = paper.width / INCH2MM * renderingData.precision
-    cvs.height = paper.height / INCH2MM * renderingData.precision
-
-    draw(cvs, renderingData)
+    draw(cvs, getRenderingData())
     return cvs.toDataURL(type, 1)!
   }, [getRenderingData])
 
