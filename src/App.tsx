@@ -400,7 +400,7 @@ export default function App() {
         <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
           <div className="form-item-name">{t('form.layout.rowShiftLabel')} (mm):</div>
           <Slider aria-label={t('form.layout.rowShiftLabel')} valueLabelDisplay="auto"
-                  min={1}
+                  min={0}
                   value={rowShift} onChange={(_, value) => setRowShiftProxy(value as number)} />
         </Stack>
       </Stack>
