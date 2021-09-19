@@ -314,7 +314,7 @@ export default function App() {
     onContextMenuCancel()
   }, [print, onContextMenuCancel])
 
-  const onContextMenuOpenImageOnNewTab = useCallback(() => {
+  const onContextMenuDownload = useCallback(() => {
     const a = document.createElement('a')
     a.target = '_blank'
     a.download = `${textProxy.value || 'image'}.png`
@@ -414,7 +414,7 @@ export default function App() {
           anchorReference="anchorPosition"
           anchorPosition={contextMenu}>
       <MenuItem onClick={onContextMenuPrint}>{t('form.print')}</MenuItem>
-      <MenuItem onClick={onContextMenuOpenImageOnNewTab}>{t('form.download')}</MenuItem>
+      <MenuItem onClick={onContextMenuDownload}>{t('form.download')}</MenuItem>
     </Menu>
   </div>
 }
