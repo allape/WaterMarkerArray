@@ -5,7 +5,7 @@
 ## [中文描述](README.md) | [English](README.en.md)
 
 ### 进度
-- √ 基础功能 | Basic functions
+- √ 基础功能
 - √ i18n
 
 ### 截图
