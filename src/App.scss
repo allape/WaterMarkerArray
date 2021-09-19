@@ -5,15 +5,24 @@
   .paper {
     margin-bottom: 10px;
     padding: 20px 24px;
-    .slider-wrapper {
+  }
+  .form-wrapper {
+    .form-item-wrapper {
       padding-bottom: 10px;
       width: 100%;
-      .slider-wrapper {
+      .form-item-wrapper {
         padding-bottom: 0;
       }
-      .slider-name {
+      .form-item-name {
         white-space: nowrap;
         min-width: 100px;
+      }
+    }
+    &.i18n-en {
+      .form-item-wrapper {
+        .form-item-name {
+          min-width: 120px;
+        }
       }
     }
   }

@@ -4,6 +4,7 @@ import {Button, FormControl, InputLabel, MenuItem, Paper, Select, Slider, Stack,
 import useStateless, {useStateProxy} from 'react-use-stateless'
 import printJS from 'print-js'
 import {FONT_FAMILIES, INCH2MM, PAPER_TYPE_MAP, PAPER_TYPES, PRINTING_QUALITIES} from './model/printer'
+import {useTranslation} from 'react-i18next'
 
 const CanvasContainerID = 'CanvasContainer'
 
@@ -100,6 +101,8 @@ const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
 }
 
 export default function App() {
+  const { t } = useTranslation()
+
   // 纸张大小
   const [paperSize, , paperSizeProxy, setPaperSizeProxy] = useStateProxy<PaperSize>(PAPER_TYPES[1].value)
   // 打印精度
@@ -280,10 +283,10 @@ export default function App() {
   }, [getRenderingData])
 
   return <div className="app-wrapper">
-    <Paper className="paper">
-      <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
+    <Paper className={`paper form-wrapper ${t('form.style.i18nClass')}`}>
+      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
         <FormControl variant="standard" fullWidth>
-          <InputLabel id="PaperSizeLabel">纸张大小</InputLabel>
+          <InputLabel id="PaperSizeLabel">{t('form.paperSizeLabel')}</InputLabel>
           <Select labelId="PaperSizeLabel"
                   value={paperSize} onChange={e => setPaperSizeProxy(e.target.value)}>
             {PAPER_TYPES.map(paper =>
@@ -291,7 +294,7 @@ export default function App() {
           </Select>
         </FormControl>
         <FormControl variant="standard" fullWidth>
-          <InputLabel id="PrecisionLabel">打印精度</InputLabel>
+          <InputLabel id="PrecisionLabel">{t('form.printQuality')}</InputLabel>
           <Select<Precision> labelId="PrecisionLabel"
                   value={precision} onChange={e => setPrecisionProxy(e.target.value as number)}>
             {PRINTING_QUALITIES.map(pre =>
@@ -299,67 +302,67 @@ export default function App() {
           </Select>
         </FormControl>
       </Stack>
-      <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-        <TextField fullWidth label="水印内容" variant="standard" value={text} onChange={e => setTextProxy(e.target.value)} />
+      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+        <TextField fullWidth label={t('form.waterMarkerText')} variant="standard" value={text} onChange={e => setTextProxy(e.target.value)} />
       </Stack>
-      <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
+      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
         <FormControl variant="standard" fullWidth>
-          <InputLabel id="FontFamilyLabel">字体类型:</InputLabel>
+          <InputLabel id="FontFamilyLabel">{t('form.font.familyLabel')}:</InputLabel>
           <Select<FontFamily> labelId="FontFamilyLabel"
                              value={fontFamily} onChange={e => setFontFamilyProxy(e.target.value)}>
             {FONT_FAMILIES.map(font =>
               <MenuItem key={font.label} value={font.value}>{font.label}</MenuItem>)}
           </Select>
         </FormControl>
-        <TextField fullWidth label="字重" variant="standard"
+        <TextField fullWidth label={t('form.font.weightLabel')} variant="standard"
                    value={fontWeight} onChange={e => setFontWeightProxy(e.target.value)} />
       </Stack>
-      <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-        <TextField fullWidth label="字体颜色" variant="standard"
+      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+        <TextField fullWidth label={t('form.font.colorLabel')} variant="standard"
                    value={color} onChange={e => setColorProxy(e.target.value)} />
-        <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-          <div className="slider-name">字体大小(mm):</div>
-          <Slider aria-label="字体大小" valueLabelDisplay="auto"
+        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+          <div className="form-item-name">{t('form.font.sizeLabel')} (mm):</div>
+          <Slider aria-label={t('form.font.sizeLabel')} valueLabelDisplay="auto"
                   min={2}
                   value={fontSize} onChange={(_, value) => setFontSizeProxy(value as number)} />
         </Stack>
       </Stack>
-      <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-        <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-          <div className="slider-name">水平间隔(mm):</div>
-          <Slider aria-label="水平间隔" valueLabelDisplay="auto"
+      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+          <div className="form-item-name">{t('form.layout.rowSpaceLabel')} (mm):</div>
+          <Slider aria-label={t('form.layout.rowSpaceLabel')} valueLabelDisplay="auto"
                   min={1}
                   value={rowSpace} onChange={(_, value) => setRowSpaceProxy(value as number)} />
         </Stack>
-        <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-          <div className="slider-name">垂直间隔(mm):</div>
-          <Slider aria-label="垂直间隔" valueLabelDisplay="auto"
+        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+          <div className="form-item-name">{t('form.layout.colSpaceLabel')} (mm):</div>
+          <Slider aria-label={t('form.layout.colSpaceLabel')} valueLabelDisplay="auto"
                   min={1}
                   value={colSpace} onChange={(_, value) => setColSpaceProxy(value as number)} />
         </Stack>
       </Stack>
-      <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-        <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-          <div className="slider-name">旋转角度(°):</div>
-          <Slider aria-label="旋转角度" valueLabelDisplay="auto"
+      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+          <div className="form-item-name">{t('form.layout.rotateLabel')} (°):</div>
+          <Slider aria-label={t('form.layout.rotateLabel')} valueLabelDisplay="auto"
                   min={0} max={360}
                   value={rotate} onChange={(_, value) => setRotateProxy(value as number)} />
         </Stack>
-        <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-          <div className="slider-name">水平偏移(mm):</div>
-          <Slider aria-label="水平偏移" valueLabelDisplay="auto"
+        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+          <div className="form-item-name">{t('form.layout.rowShiftLabel')} (mm):</div>
+          <Slider aria-label={t('form.layout.rowShiftLabel')} valueLabelDisplay="auto"
                   min={1}
                   value={rowShift} onChange={(_, value) => setRowShiftProxy(value as number)} />
         </Stack>
       </Stack>
-      <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-        <Stack className="slider-wrapper" spacing={2} direction="row" alignItems="center">
-          <TextField fullWidth label="背景图片" variant="standard"
+      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+          <TextField fullWidth label={t('form.backgroundImage')} variant="standard"
                      InputLabelProps={{
                        shrink: true,
                      }}
                      type="file" onChange={onFileChange} />
-          <Button onClick={print}>打印</Button>
+          <Button onClick={print}>{t('form.print')}</Button>
         </Stack>
       </Stack>
     </Paper>

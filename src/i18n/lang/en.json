@@ -1,0 +1,24 @@
+{
+  "form": {
+    "style": {
+      "i18nClass": "i18n-en"
+    },
+    "paperSizeLabel": "Paper",
+    "printQuality": "Print Quality",
+    "waterMarkerText": "Text",
+    "font": {
+      "familyLabel": "Font Family",
+      "weightLabel": "Font Weight",
+      "colorLabel": "Font Color",
+      "sizeLabel": "Font Size"
+    },
+    "layout": {
+      "rowSpaceLabel": "Row Space",
+      "colSpaceLabel": "Col Space",
+      "rotateLabel": "Rotate",
+      "rowShiftLabel": "Row Shift"
+    },
+    "backgroundImage": "Image",
+    "print": "Print"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "form": {
+    "style": {
+      "i18nClass": "i18n-zhCN"
+    },
+    "paperSizeLabel": "纸张大小",
+    "printQuality": "打印精度",
+    "waterMarkerText": "水印内容",
+    "font": {
+      "familyLabel": "字体类型",
+      "weightLabel": "字重",
+      "colorLabel": "字体颜色",
+      "sizeLabel": "字体大小"
+    },
+    "layout": {
+      "rowSpaceLabel": "水平间隔",
+      "colSpaceLabel": "垂直间隔",
+      "rotateLabel": "旋转角度",
+      "rowShiftLabel": "水平偏移"
+    },
+    "backgroundImage": "背景图片",
+    "print": "打印"
+  }
+}
