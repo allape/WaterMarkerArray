@@ -16,6 +16,8 @@ import useStateless, {useStateProxy} from 'react-use-stateless'
 import printJS from 'print-js'
 import {FONT_FAMILIES, INCH2MM, PAPER_TYPE_MAP, PAPER_TYPES, PRINTING_QUALITIES} from './model/printer'
 import {useTranslation} from 'react-i18next'
+import {StackProps} from '@material-ui/core/Stack/Stack'
+import {CurrentLanguage, LANGUAGES} from './i18n/config'
 
 const CanvasContainerID = 'CanvasContainer'
 
@@ -116,8 +118,26 @@ const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
   }
 }
 
+const CommonStackProps: Partial<StackProps> = {
+  className: 'form-item-wrapper',
+  spacing: 2,
+  direction: 'row',
+  alignItems: 'center',
+}
+
 export default function App() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+
+  // 语言
+  const [language, setLanguage] = useState<string>(CurrentLanguage)
+  const changeLanguage = useCallback(async (language: string) => {
+    await i18n.changeLanguage(language)
+    setLanguage(language)
+  }, [i18n])
+
+  useEffect(() => {
+    window.document.title = t('title')
+  }, [t, i18n.language])
 
   // 纸张大小
   const [paperSize, , paperSizeProxy, setPaperSizeProxy] = useStateProxy<PaperSize>(PAPER_TYPES[1].value)
@@ -327,16 +347,25 @@ export default function App() {
 
   return <div className="app-wrapper">
     <Paper className={`paper form-wrapper ${t('form.style.i18nClass')}`}>
-      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+      <Stack {...CommonStackProps}>
         <FormControl variant="standard" fullWidth>
-          <InputLabel id="PaperSizeLabel">{t('form.paperSizeLabel')}</InputLabel>
-          <Select labelId="PaperSizeLabel"
-                  value={paperSize} onChange={e => setPaperSizeProxy(e.target.value)}>
-            {PAPER_TYPES.map(paper =>
-              <MenuItem key={paper.value} value={paper.value}>{paper.label}</MenuItem>)}
+          <InputLabel id="LanguageLabel">{t('form.languageLabel')}</InputLabel>
+          <Select labelId="LanguageLabel"
+                  value={language} onChange={e => changeLanguage(e.target.value)}>
+            {LANGUAGES.map(lan =>
+              <MenuItem key={lan.language} value={lan.language}>{lan.name}</MenuItem>)}
           </Select>
         </FormControl>
-        <FormControl variant="standard" fullWidth>
+        <Stack {...CommonStackProps}>
+          <FormControl variant="standard" fullWidth>
+            <InputLabel id="PaperSizeLabel">{t('form.paperSizeLabel')}</InputLabel>
+            <Select labelId="PaperSizeLabel"
+                    value={paperSize} onChange={e => setPaperSizeProxy(e.target.value)}>
+              {PAPER_TYPES.map(paper =>
+                <MenuItem key={paper.value} value={paper.value}>{paper.label}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <FormControl variant="standard" fullWidth>
           <InputLabel id="PrecisionLabel">{t('form.printQuality')}</InputLabel>
           <Select<Precision> labelId="PrecisionLabel"
                   value={precision} onChange={e => setPrecisionProxy(e.target.value as number)}>
@@ -344,11 +373,12 @@ export default function App() {
               <MenuItem key={pre.value} value={pre.value}>{pre.label}</MenuItem>)}
           </Select>
         </FormControl>
+        </Stack>
       </Stack>
-      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+      <Stack {...CommonStackProps}>
         <TextField fullWidth label={t('form.waterMarkerText')} variant="standard" value={text} onChange={e => setTextProxy(e.target.value)} />
       </Stack>
-      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+      <Stack {...CommonStackProps}>
         <FormControl variant="standard" fullWidth>
           <InputLabel id="FontFamilyLabel">{t('form.font.familyLabel')}:</InputLabel>
           <Select<FontFamily> labelId="FontFamilyLabel"
@@ -360,46 +390,46 @@ export default function App() {
         <TextField fullWidth label={t('form.font.weightLabel')} variant="standard"
                    value={fontWeight} onChange={e => setFontWeightProxy(e.target.value)} />
       </Stack>
-      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+      <Stack {...CommonStackProps}>
         <TextField fullWidth label={t('form.font.colorLabel')} variant="standard"
                    value={color} onChange={e => setColorProxy(e.target.value)} />
-        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+        <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.font.sizeLabel')} (mm):</div>
           <Slider aria-label={t('form.font.sizeLabel')} valueLabelDisplay="auto"
                   min={2}
                   value={fontSize} onChange={(_, value) => setFontSizeProxy(value as number)} />
         </Stack>
       </Stack>
-      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
-        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+      <Stack {...CommonStackProps}>
+        <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.layout.rowSpaceLabel')} (mm):</div>
           <Slider aria-label={t('form.layout.rowSpaceLabel')} valueLabelDisplay="auto"
                   min={1}
                   value={rowSpace} onChange={(_, value) => setRowSpaceProxy(value as number)} />
         </Stack>
-        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+        <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.layout.colSpaceLabel')} (mm):</div>
           <Slider aria-label={t('form.layout.colSpaceLabel')} valueLabelDisplay="auto"
                   min={1}
                   value={colSpace} onChange={(_, value) => setColSpaceProxy(value as number)} />
         </Stack>
       </Stack>
-      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
-        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+      <Stack {...CommonStackProps}>
+        <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.layout.rotateLabel')} (°):</div>
           <Slider aria-label={t('form.layout.rotateLabel')} valueLabelDisplay="auto"
                   min={0} max={360}
                   value={rotate} onChange={(_, value) => setRotateProxy(value as number)} />
         </Stack>
-        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+        <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.layout.rowShiftLabel')} (mm):</div>
           <Slider aria-label={t('form.layout.rowShiftLabel')} valueLabelDisplay="auto"
                   min={0}
                   value={rowShift} onChange={(_, value) => setRowShiftProxy(value as number)} />
         </Stack>
       </Stack>
-      <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
-        <Stack className="form-item-wrapper" spacing={2} direction="row" alignItems="center">
+      <Stack {...CommonStackProps}>
+        <Stack {...CommonStackProps}>
           <TextField fullWidth label={t('form.backgroundImage')} variant="standard"
                      InputLabelProps={{
                        shrink: true,

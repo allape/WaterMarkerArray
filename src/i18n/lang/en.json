@@ -1,8 +1,10 @@
 {
+  "title": "Water Marker Array",
   "form": {
     "style": {
       "i18nClass": "i18n-en"
     },
+    "languageLabel": "语言",
     "paperSizeLabel": "Paper",
     "printQuality": "Print Quality",
     "waterMarkerText": "Text",

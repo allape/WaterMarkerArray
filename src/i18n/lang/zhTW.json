@@ -1,0 +1,27 @@
+{
+  "title": "水印陣列",
+  "form": {
+    "style": {
+      "i18nClass": "i18n-zh i18n-zhTW"
+    },
+    "languageLabel": "Language",
+    "paperSizeLabel": "紙張大小",
+    "printQuality": "打印精度",
+    "waterMarkerText": "水印內容",
+    "font": {
+      "familyLabel": "字體類型",
+      "weightLabel": "字重",
+      "colorLabel": "字體顏色",
+      "sizeLabel": "字體大小"
+    },
+    "layout": {
+      "rowSpaceLabel": "水平間隔",
+      "colSpaceLabel": "垂直間隔",
+      "rotateLabel": "旋轉角度",
+      "rowShiftLabel": "水平偏移"
+    },
+    "backgroundImage": "背景圖片",
+    "print": "打印",
+    "download": "下載圖片"
+  }
+}

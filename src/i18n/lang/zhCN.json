@@ -1,8 +1,10 @@
 {
+  "title": "水印阵列",
   "form": {
     "style": {
-      "i18nClass": "i18n-zhCN"
+      "i18nClass": "i18n-zh i18n-zhCN"
     },
+    "languageLabel": "Language",
     "paperSizeLabel": "纸张大小",
     "printQuality": "打印精度",
     "waterMarkerText": "水印内容",
