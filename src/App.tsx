@@ -51,7 +51,7 @@ const CommonStackProps: Partial<StackProps> = {
 export default function App() {
   const { t, i18n } = useTranslation()
 
-  const { loading, load, loaded } = useLoading()
+  const { loading, load, loaded, isLoading } = useLoading()
 
   // 语言
   const [language, setLanguage] = useState<string>(CurrentLanguage)
@@ -284,11 +284,12 @@ export default function App() {
   const [contextMenu, setContextMenu] = useState<ContextMenuPosition | undefined>()
   const onContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault()
+    if (isLoading()) return
     setContextMenu(old => old ? undefined : {
       left: event.clientX - 2,
       top: event.clientY - 4,
     })
-  }, [])
+  }, [isLoading])
   const onContextMenuCancel = useCallback(() => {
     setContextMenu(undefined)
   }, [])
@@ -308,6 +309,10 @@ export default function App() {
   }, [textProxy, getCanvasImageDataURL, onContextMenuCancel])
 
   // endregion
+
+  useEffect(() => {
+    onContextMenuCancel()
+  }, [loading, onContextMenuCancel])
 
   return <div className="app-wrapper">
     <Paper className={`paper form-wrapper ${t('form.style.i18nClass')}`}>
