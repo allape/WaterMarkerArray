@@ -107,9 +107,12 @@ export function draw (cvs: HTMLCanvasElement | OffscreenCanvas | null, data: Ren
   const paper = PAPER_TYPE_MAP[data.paperSize]
   const precision = data.precision
 
+  // 毫米数除以这个值就是对应的像素值. 推算方式: mm / INCH2MM * precision
+  const ppmRatio = INCH2MM / precision
+
   // 实际画布大小
-  const cvsWidth = paper.width / INCH2MM * precision
-  const cvsHeight = paper.height / INCH2MM * precision
+  const cvsWidth = paper.width / ppmRatio
+  const cvsHeight = paper.height / ppmRatio
 
   if (cvs == null) {
     if ('OffscreenCanvas' in global) {
@@ -118,17 +121,17 @@ export function draw (cvs: HTMLCanvasElement | OffscreenCanvas | null, data: Ren
       throw new Error('Current browser does NOT support OffscreenCanvas, you have to provide a Canvas Object to render.')
     }
   } else {
-    cvs.width = paper.width / INCH2MM * precision
-    cvs.height = paper.height / INCH2MM * precision
+    cvs.width = cvsWidth
+    cvs.height = cvsHeight
   }
 
   const ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D = cvs.getContext('2d')!
 
   // 转换数据, 因为有的是毫米单位, 应转为px
-  const fontSize = data.fontSize / INCH2MM * precision
-  const rowSpace = data.rowSpace / INCH2MM * precision
-  const colSpace = data.colSpace / INCH2MM * precision
-  const rowShift = data.rowShift / INCH2MM * precision
+  const fontSize = data.fontSize / ppmRatio
+  const rowSpace = data.rowSpace / ppmRatio
+  const colSpace = data.colSpace / ppmRatio
+  const rowShift = data.rowShift / ppmRatio
 
   // 获取最长的那个边, 然后以那个长度的两倍值作为实际的文本绘制区域, 这样在旋转的时候就不会出现空白的地方了
   const textBoxWidth = Math.max(cvsWidth, cvsHeight) * 2
