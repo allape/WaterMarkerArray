@@ -3,7 +3,7 @@ import './App.scss'
 import {
   Button,
   FormControl,
-  InputLabel,
+  InputLabel, LinearProgress,
   Menu,
   MenuItem,
   Paper,
@@ -18,12 +18,10 @@ import {useTranslation} from 'react-i18next'
 import {StackProps} from '@material-ui/core/Stack/Stack'
 import {CurrentLanguage, LANGUAGES} from './i18n/config'
 import {
-  blob2dataURL,
   Color,
   ColSpace,
   ContextMenuPosition,
   draw,
-  FONT_FAMILIES,
   FontFamily,
   FontSize,
   FontWeight,
@@ -31,12 +29,15 @@ import {
   PaperSize,
   Precision,
   PRINTING_QUALITIES,
+  RawImage,
   RenderingData,
   Rotate,
   RowShift,
   RowSpace,
   Text,
 } from './core/core'
+import useLoading from 'react-loading-state'
+import {WorkerData, WorkerResponse} from './core/worker'
 
 const CanvasContainerID = 'CanvasContainer'
 
@@ -49,6 +50,8 @@ const CommonStackProps: Partial<StackProps> = {
 
 export default function App() {
   const { t, i18n } = useTranslation()
+
+  const { loading, load, loaded } = useLoading()
 
   // 语言
   const [language, setLanguage] = useState<string>(CurrentLanguage)
@@ -70,7 +73,7 @@ export default function App() {
   // 字体颜色
   const [color, , colorProxy, setColorProxy] = useStateProxy<Color>('rgba(0, 0, 0, 0.1)')
   // 字体类型
-  const [fontFamily, , fontFamilyProxy, setFontFamilyProxy] = useStateProxy<FontFamily>(FONT_FAMILIES[0].value)
+  const [fontFamily, , fontFamilyProxy, setFontFamilyProxy] = useStateProxy<FontFamily>('serif')
   // 字体大小
   const [fontSize, , fontSizeProxy, setFontSizeProxy] = useStateProxy<FontSize>(6)
   // 字重
@@ -85,7 +88,7 @@ export default function App() {
   const [rowShift, , rowShiftProxy, setRowShiftProxy] = useStateProxy<RowShift>(10)
 
   // 上传的图片
-  const [image, , imageProxy, setImageProxy] = useStateProxy<HTMLImageElement | undefined>()
+  const [image, , imageProxy, setImageProxy] = useStateProxy<RawImage>()
 
   const [canvas] = useStateless<HTMLCanvasElement | undefined>(undefined)
   const [rendering] = useStateless(false)
@@ -217,26 +220,56 @@ export default function App() {
     image,
   ])
 
-  const onFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const img = new Image()
-      img.onload = () => {
-        setImageProxy(img)
+      const lk = load()
+      try {
+        setImageProxy({
+          bitmap: await createImageBitmap(new Blob([await e.target.files[0].arrayBuffer()])),
+        })
+      } finally {
+        loaded(lk)
       }
-      img.src = URL.createObjectURL(e.target.files[0])
     }
-  }, [setImageProxy])
+  }, [setImageProxy, load, loaded])
 
-  const getCanvasImageDataURL = useCallback(async (type: string = 'image/png'): Promise<string> => {
-    const cvs = draw('OffscreenCanvas' in window ? null : document.createElement('canvas'), getRenderingData())
-    if (cvs instanceof HTMLCanvasElement) {
+  const getCanvasImageDataURL = useCallback(async (type: string = 'image/png', usingWorker = true): Promise<string> => {
+    const data = getRenderingData()
+    if (window.Worker && usingWorker) {
+      return new Promise(resolve => {
+        const lk = load()
+        const resolveWithMainThread = async () => resolve(await getCanvasImageDataURL(type, false))
+        try {
+          const workerDrawData: WorkerData = {
+            type: 'draw',
+            data,
+          }
+          const worker = new Worker('/core.worker.js')
+          worker.postMessage(workerDrawData)
+          worker.onmessage = (ev: MessageEvent<WorkerResponse<string>>) => {
+            switch (ev.data.type) {
+              case 'then':
+                resolve(ev.data.data)
+                break
+              case 'catch':
+                console.error('error in worker response:', ev.data.data)
+                resolveWithMainThread()
+                break
+              case 'finally':
+                loaded(lk)
+                break
+            }
+          }
+        } catch (e) {
+          console.error('error on creating worker:', e)
+          resolveWithMainThread()
+        }
+      })
+    } else {
+      const cvs = draw(document.createElement('canvas'), data) as HTMLCanvasElement
       return cvs.toDataURL(type, 1)!
     }
-    return blob2dataURL(await cvs.convertToBlob({
-      type,
-      quality: 1,
-    }))
-  }, [getRenderingData])
+  }, [getRenderingData, load, loaded])
 
   const print = useCallback(async () => {
     printJS({
@@ -281,7 +314,7 @@ export default function App() {
       <Stack {...CommonStackProps}>
         <FormControl variant="standard" fullWidth>
           <InputLabel id="LanguageLabel">{t('form.languageLabel')}</InputLabel>
-          <Select labelId="LanguageLabel"
+          <Select labelId="LanguageLabel" disabled={loading}
                   value={language} onChange={e => changeLanguage(e.target.value)}>
             {LANGUAGES.map(lan =>
               <MenuItem key={lan.language} value={lan.language}>{lan.name}</MenuItem>)}
@@ -290,7 +323,7 @@ export default function App() {
         <Stack {...CommonStackProps}>
           <FormControl variant="standard" fullWidth>
             <InputLabel id="PaperSizeLabel">{t('form.paperSizeLabel')}</InputLabel>
-            <Select labelId="PaperSizeLabel"
+            <Select labelId="PaperSizeLabel" disabled={loading}
                     value={paperSize} onChange={e => setPaperSizeProxy(e.target.value)}>
               {PAPER_TYPES.map(paper =>
                 <MenuItem key={paper.value} value={paper.value}>{paper.label}</MenuItem>)}
@@ -298,7 +331,7 @@ export default function App() {
           </FormControl>
           <FormControl variant="standard" fullWidth>
           <InputLabel id="PrecisionLabel">{t('form.printQuality')}</InputLabel>
-          <Select<Precision> labelId="PrecisionLabel"
+          <Select<Precision> labelId="PrecisionLabel" disabled={loading}
                   value={precision} onChange={e => setPrecisionProxy(e.target.value as number)}>
             {PRINTING_QUALITIES.map(pre =>
               <MenuItem key={pre.value} value={pre.value}>{pre.label}</MenuItem>)}
@@ -307,27 +340,33 @@ export default function App() {
         </Stack>
       </Stack>
       <Stack {...CommonStackProps}>
-        <TextField fullWidth label={t('form.waterMarkerText')} variant="standard" value={text} onChange={e => setTextProxy(e.target.value)} />
+        <TextField fullWidth label={t('form.waterMarkerText')} variant="standard"
+                   disabled={loading}
+                   value={text} onChange={e => setTextProxy(e.target.value)} />
       </Stack>
       <Stack {...CommonStackProps}>
-        <FormControl variant="standard" fullWidth>
-          <InputLabel id="FontFamilyLabel">{t('form.font.familyLabel')}:</InputLabel>
-          <Select<FontFamily> labelId="FontFamilyLabel"
-                             value={fontFamily} onChange={e => setFontFamilyProxy(e.target.value)}>
-            {FONT_FAMILIES.map(font =>
-              <MenuItem key={font.label} value={font.value}>{font.label}</MenuItem>)}
-          </Select>
-        </FormControl>
-        <TextField fullWidth label={t('form.font.weightLabel')} variant="standard"
-                   value={fontWeight} onChange={e => setFontWeightProxy(e.target.value)} />
+        {/*<FormControl variant="standard" fullWidth>*/}
+        {/*  <InputLabel id="FontFamilyLabel">{t('form.font.familyLabel')}:</InputLabel>*/}
+        {/*  <Select<FontFamily> labelId="FontFamilyLabel" disabled={loading}*/}
+        {/*                     value={fontFamily} onChange={e => setFontFamilyProxy(e.target.value)}>*/}
+        {/*    {FONT_FAMILIES.map(font =>*/}
+        {/*      <MenuItem key={font.label} value={font.value}>{font.label}</MenuItem>)}*/}
+        {/*  </Select>*/}
+        {/*</FormControl>*/}
+        <TextField fullWidth
+                   label={t('form.font.familyLabel')} variant="standard"
+                   value={fontFamily} disabled={loading} onChange={e => setFontFamilyProxy(e.target.value)} />
+        <TextField fullWidth type="number"
+                   label={t('form.font.weightLabel')} variant="standard"
+                   value={fontWeight} disabled={loading} onChange={e => setFontWeightProxy(e.target.value)} />
       </Stack>
       <Stack {...CommonStackProps}>
         <TextField fullWidth label={t('form.font.colorLabel')} variant="standard"
-                   value={color} onChange={e => setColorProxy(e.target.value)} />
+                   value={color} disabled={loading} onChange={e => setColorProxy(e.target.value)} />
         <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.font.sizeLabel')} (mm):</div>
           <Slider aria-label={t('form.font.sizeLabel')} valueLabelDisplay="auto"
-                  min={2}
+                  min={2} disabled={loading}
                   value={fontSize} onChange={(_, value) => setFontSizeProxy(value as number)} />
         </Stack>
       </Stack>
@@ -335,13 +374,13 @@ export default function App() {
         <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.layout.rowSpaceLabel')} (mm):</div>
           <Slider aria-label={t('form.layout.rowSpaceLabel')} valueLabelDisplay="auto"
-                  min={1}
+                  min={1} disabled={loading}
                   value={rowSpace} onChange={(_, value) => setRowSpaceProxy(value as number)} />
         </Stack>
         <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.layout.colSpaceLabel')} (mm):</div>
           <Slider aria-label={t('form.layout.colSpaceLabel')} valueLabelDisplay="auto"
-                  min={1}
+                  min={1} disabled={loading}
                   value={colSpace} onChange={(_, value) => setColSpaceProxy(value as number)} />
         </Stack>
       </Stack>
@@ -349,13 +388,13 @@ export default function App() {
         <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.layout.rotateLabel')} (°):</div>
           <Slider aria-label={t('form.layout.rotateLabel')} valueLabelDisplay="auto"
-                  min={0} max={360}
+                  min={0} max={360} disabled={loading}
                   value={rotate} onChange={(_, value) => setRotateProxy(value as number)} />
         </Stack>
         <Stack {...CommonStackProps}>
           <div className="form-item-name">{t('form.layout.rowShiftLabel')} (mm):</div>
           <Slider aria-label={t('form.layout.rowShiftLabel')} valueLabelDisplay="auto"
-                  min={0}
+                  min={0} disabled={loading}
                   value={rowShift} onChange={(_, value) => setRowShiftProxy(value as number)} />
         </Stack>
       </Stack>
@@ -365,10 +404,11 @@ export default function App() {
                      InputLabelProps={{
                        shrink: true,
                      }}
-                     type="file" onChange={onFileChange} />
-          <Button onClick={print}>{t('form.print')}</Button>
+                     type="file" disabled={loading} onChange={onFileChange} />
+          <Button disabled={loading} onClick={print}>{t('form.print')}</Button>
         </Stack>
       </Stack>
+      <LinearProgress className="progress-indicator" style={{ opacity: loading ? 1 : 0 }} />
     </Paper>
     <Paper className="canvas-container" id={CanvasContainerID} onContextMenu={onContextMenu} />
     <Menu open={!!contextMenu} onClose={onContextMenuCancel}

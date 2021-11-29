@@ -9,6 +9,9 @@ export type RowSpace = number
 export type ColSpace = number
 export type Rotate = number
 export type RowShift = number
+export interface RawImage {
+  bitmap: ImageBitmap
+}
 
 export interface RenderingData {
   paperSize: PaperSize
@@ -22,7 +25,7 @@ export interface RenderingData {
   colSpace: ColSpace
   rotate: Rotate
   rowShift: RowShift
-  image?: HTMLImageElement
+  image?: RawImage
 }
 
 export interface ContextMenuPosition {
@@ -60,17 +63,21 @@ export const PRINTING_QUALITIES: LV<number>[] = [
   {value: 200, label: '200ppi'},
   {value: 300, label: '300ppi'},
   {value: 600, label: '600ppi'},
+  {value: 1200, label: '1200ppi'},
 ]
 
 // 1in = 25.4mm
 export const INCH2MM = 25.4
 
 // 浏览器所有的字体
-export const FONT_FAMILIES: LV<string>[] = [
-  {label: '-default-', value: 'serif'},
-  ...Array.from(new Set(Array.from(document.fonts).map(font => font.family)))
-    .map(font => ({label: font, value: font})),
-]
+// export const FONT_FAMILIES: LV<string>[] = [
+//   {label: '-default-', value: 'serif'},
+//   {label: '微软雅黑', value: '微软雅黑'},
+//   // ...Array.from(new Set(Array.from(document?.fonts || []).map(font => font.family)))
+//   //   .map(font => ({label: font, value: font})),
+// ]
+
+export const global = self || window
 
 /**
  * 转换blob为data url
@@ -105,7 +112,7 @@ export function draw (cvs: HTMLCanvasElement | OffscreenCanvas | null, data: Ren
   const cvsHeight = paper.height / INCH2MM * precision
 
   if (cvs == null) {
-    if ('OffscreenCanvas' in window) {
+    if ('OffscreenCanvas' in global) {
       cvs = new OffscreenCanvas(cvsWidth, cvsHeight)
     } else {
       throw new Error('Current browser does NOT support OffscreenCanvas, you have to provide a Canvas Object to render.')
@@ -137,7 +144,7 @@ export function draw (cvs: HTMLCanvasElement | OffscreenCanvas | null, data: Ren
 
   // 添加图片
   if (data.image) {
-    ctx.drawImage(data.image, 0, 0, cvsWidth, cvsHeight)
+    ctx.drawImage(data.image.bitmap, 0, 0, cvsWidth, cvsHeight)
   }
   // 设置当前光标到画布的中心
   ctx.translate(cvsHalfWidth, cvsHalfHeight)
