@@ -242,7 +242,10 @@ export default function App() {
         try {
           const workerDrawData: WorkerData = {
             type: 'draw',
-            data,
+            data: {
+              ...data,
+              type,
+            },
           }
           const worker = new Worker(`${process.env.PUBLIC_URL}/core.worker.js`)
           worker.postMessage(workerDrawData)
