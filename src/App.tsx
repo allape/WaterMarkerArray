@@ -20,7 +20,7 @@ import {CurrentLanguage, LANGUAGES} from './i18n/config'
 import {
   Color,
   ColSpace,
-  ContextMenuPosition,
+  ContextMenuPosition, createImageBitmap_polyfill,
   draw,
   FontFamily,
   FontSize,
@@ -225,7 +225,7 @@ export default function App() {
       const lk = load()
       try {
         setImageProxy({
-          bitmap: await createImageBitmap(new Blob([await e.target.files[0].arrayBuffer()])),
+          bitmap: await createImageBitmap_polyfill(new Blob([await e.target.files[0].arrayBuffer()])),
         })
       } finally {
         loaded(lk)
@@ -235,7 +235,7 @@ export default function App() {
 
   const getCanvasImageDataURL = useCallback(async (type: string = 'image/png', usingWorker = true): Promise<string> => {
     const data = getRenderingData()
-    if (window.Worker && usingWorker) {
+    if (window.Worker && 'OffscreenCanvas' in window && usingWorker) {
       return new Promise(resolve => {
         const lk = load()
         const resolveWithMainThread = async () => resolve(await getCanvasImageDataURL(type, false))

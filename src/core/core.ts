@@ -80,6 +80,18 @@ export const INCH2MM = 25.4
 export const global = self || window
 
 /**
+ * 兼容不支持createImageBitmap的设备
+ * @param blob {@link window.createImageBitmap}
+ */
+export async function createImageBitmap_polyfill (blob: Blob): Promise<ImageBitmap> {
+  return 'createImageBitmap' in global ? createImageBitmap(blob) : new Promise<ImageBitmap>(resolve => {
+    const img = document.createElement('img')
+    img.onload = () => resolve(img as unknown as ImageBitmap)
+    img.src = URL.createObjectURL(blob)
+  })
+}
+
+/**
  * 转换blob为data url
  * @param blob Blob
  */
