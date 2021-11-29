@@ -14,109 +14,30 @@ import {
 } from '@material-ui/core'
 import useStateless, {useStateProxy} from 'react-use-stateless'
 import printJS from 'print-js'
-import {FONT_FAMILIES, INCH2MM, PAPER_TYPE_MAP, PAPER_TYPES, PRINTING_QUALITIES} from './model/printer'
 import {useTranslation} from 'react-i18next'
 import {StackProps} from '@material-ui/core/Stack/Stack'
 import {CurrentLanguage, LANGUAGES} from './i18n/config'
+import {
+  Color,
+  ColSpace,
+  ContextMenuPosition,
+  draw,
+  FONT_FAMILIES,
+  FontFamily,
+  FontSize,
+  FontWeight,
+  PAPER_TYPES,
+  PaperSize,
+  Precision,
+  PRINTING_QUALITIES,
+  RenderingData,
+  Rotate,
+  RowShift,
+  RowSpace,
+  Text,
+} from './core/core'
 
 const CanvasContainerID = 'CanvasContainer'
-
-type PaperSize = string
-type Precision = number
-type Text = string
-type Color = string
-type FontFamily = string
-type FontSize = number
-type FontWeight = string
-type RowSpace = number
-type ColSpace = number
-type Rotate = number
-type RowShift = number
-interface RenderingData {
-  paperSize: PaperSize
-  precision: Precision
-  text: Text
-  color: Color
-  fontFamily: FontFamily
-  fontSize: FontSize
-  fontWeight: FontWeight
-  rowSpace: RowSpace
-  colSpace: ColSpace
-  rotate: Rotate
-  rowShift: RowShift
-  image?: HTMLImageElement
-}
-
-interface ContextMenuPosition {
-  left: number;
-  top: number;
-}
-
-const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
-  const ctx: CanvasRenderingContext2D = cvs.getContext('2d')!
-
-  // 根据打印精度和纸张大小确定画布大小
-  const paper = PAPER_TYPE_MAP[data.paperSize]
-  const precision = data.precision
-  cvs.width = paper.width / INCH2MM * precision
-  cvs.height = paper.height / INCH2MM * precision
-
-  // 转换数据, 因为有的是毫米单位, 应转为px
-  const fontSize = data.fontSize / INCH2MM * precision
-  const rowSpace = data.rowSpace / INCH2MM * precision
-  const colSpace = data.colSpace / INCH2MM * precision
-  const rowShift = data.rowShift / INCH2MM * precision
-
-  // 获取最长的那个边, 然后以那个长度的两倍值作为实际的文本绘制区域, 这样在旋转的时候就不会出现空白的地方了
-  const textBoxWidth = Math.max(cvs.width, cvs.height) * 2
-
-  // 画布高宽一半的值
-  const cvsHalfWidth = cvs.width / 2, cvsHalfHeight = cvs.height / 2
-  // 新的原点
-  const originX = -textBoxWidth / 2, originY = -textBoxWidth / 2
-
-  // 清空内容
-  ctx.fillStyle = '#ffffff'
-  ctx.clearRect(originX + cvsHalfWidth, originY + cvsHalfHeight, textBoxWidth, textBoxWidth)
-
-  // 添加图片
-  if (data.image) {
-    ctx.drawImage(data.image, 0, 0, cvs.width, cvs.height)
-  }
-  // 设置当前光标到画布的中心
-  ctx.translate(cvsHalfWidth, cvsHalfHeight)
-  // 设置旋转
-  ctx.rotate(data.rotate * Math.PI / 180)
-  // 设置当前画笔到实际文本绘制区域的左上角
-  ctx.translate(originX, originY)
-
-  // 绘制的内容
-  const text = data.text
-
-  // 设置字体并获取字体高度和宽度, 用于计算下一次的偏移量
-  ctx.font = `${data.fontWeight || 'normal'} ${fontSize}px ${data.fontFamily || 'serif'}`
-  ctx.textBaseline = 'middle'
-  const mat = ctx.measureText(text)
-  const textWidth = mat.width
-  const textHeight = mat.fontBoundingBoxAscent + mat.fontBoundingBoxDescent
-
-  // 开始绘制
-  ctx.fillStyle = data.color
-  let currentX = 0, currentY = 0, rowCount = 0
-  while (currentY <= textBoxWidth) {
-    if (currentX > textBoxWidth + rowShift * rowCount) {
-      const colShift = textHeight + colSpace
-      ctx.translate(-rowShift, colShift)
-      currentX = -rowShift * rowCount
-      currentY += colShift
-      rowCount ++
-    }
-
-    ctx.fillText(text, currentX, 0)
-
-    currentX += textWidth + rowSpace
-  }
-}
 
 const CommonStackProps: Partial<StackProps> = {
   className: 'form-item-wrapper',
