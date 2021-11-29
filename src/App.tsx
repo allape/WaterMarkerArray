@@ -244,7 +244,7 @@ export default function App() {
             type: 'draw',
             data,
           }
-          const worker = new Worker('/core.worker.js')
+          const worker = new Worker(`${process.env.PUBLIC_URL}/core.worker.js`)
           worker.postMessage(workerDrawData)
           worker.onmessage = (ev: MessageEvent<WorkerResponse<string>>) => {
             switch (ev.data.type) {
