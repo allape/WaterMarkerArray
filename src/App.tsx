@@ -18,6 +18,7 @@ import {useTranslation} from 'react-i18next'
 import {StackProps} from '@material-ui/core/Stack/Stack'
 import {CurrentLanguage, LANGUAGES} from './i18n/config'
 import {
+  blob2dataURL,
   Color,
   ColSpace,
   ContextMenuPosition,
@@ -226,14 +227,23 @@ export default function App() {
     }
   }, [setImageProxy])
 
-  const getCanvasImageDataURL = useCallback((type: string = 'image/png'): string => {
-    const cvs: HTMLCanvasElement = document.createElement('canvas')
-    draw(cvs, getRenderingData())
-    return cvs.toDataURL(type, 1)!
+  const getCanvasImageDataURL = useCallback(async (type: string = 'image/png'): Promise<string> => {
+    const cvs = draw('OffscreenCanvas' in window ? null : document.createElement('canvas'), getRenderingData())
+    if (cvs instanceof HTMLCanvasElement) {
+      return cvs.toDataURL(type, 1)!
+    }
+    return blob2dataURL(await cvs.convertToBlob({
+      type,
+      quality: 1,
+    }))
   }, [getRenderingData])
 
-  const print = useCallback(() => {
-    printJS(getCanvasImageDataURL(), 'image')
+  const print = useCallback(async () => {
+    printJS({
+      printable: await getCanvasImageDataURL(),
+      type: 'image',
+      style: '@media print { body { margin: 0; padding: 0; } }',
+    })
   }, [getCanvasImageDataURL])
 
   // region 右键
@@ -251,15 +261,15 @@ export default function App() {
   }, [])
 
   const onContextMenuPrint = useCallback(() => {
-    print()
+    print().then()
     onContextMenuCancel()
   }, [print, onContextMenuCancel])
 
-  const onContextMenuDownload = useCallback(() => {
+  const onContextMenuDownload = useCallback(async () => {
     const a = document.createElement('a')
     a.target = '_blank'
     a.download = `${textProxy.value || 'image'}.png`
-    a.href = getCanvasImageDataURL('image/octet-stream')
+    a.href = await getCanvasImageDataURL('image/octet-stream')
     a.click()
     onContextMenuCancel()
   }, [textProxy, getCanvasImageDataURL, onContextMenuCancel])

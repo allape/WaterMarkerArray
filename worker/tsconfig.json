@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "ts-compiled",
+    "target": "es5",
+    "allowJs": true,
+    "lib": [
+      "ESNext"
+    ],
+    "module": "CommonJS"
+  },
+  "include": [
+    "src"
+  ]
+}

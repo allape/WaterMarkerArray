@@ -73,18 +73,49 @@ export const FONT_FAMILIES: LV<string>[] = [
 ]
 
 /**
+ * 转换blob为data url
+ * @param blob Blob
+ */
+export function blob2dataURL (blob: Blob): Promise<string> {
+  const fileReader = new FileReader();
+  return new Promise<string>((resolve, reject) => {
+    fileReader.onload = e => {
+      const result = e.target?.result
+      if (!result) reject('null value')
+      else resolve(result as string)
+    }
+    fileReader.onerror = e => reject(e)
+    fileReader.onabort = e => reject(e)
+    fileReader.readAsDataURL(blob)
+  })
+}
+
+/**
  * 主要方法
  * @param cvs 绘制的canvas对象
  * @param data 绘制内容
  */
-export const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
-  const ctx: CanvasRenderingContext2D = cvs.getContext('2d')!
-
+export function draw (cvs: HTMLCanvasElement | OffscreenCanvas | null, data: RenderingData): HTMLCanvasElement | OffscreenCanvas {
   // 根据打印精度和纸张大小确定画布大小
   const paper = PAPER_TYPE_MAP[data.paperSize]
   const precision = data.precision
-  cvs.width = paper.width / INCH2MM * precision
-  cvs.height = paper.height / INCH2MM * precision
+
+  // 实际画布大小
+  const cvsWidth = paper.width / INCH2MM * precision
+  const cvsHeight = paper.height / INCH2MM * precision
+
+  if (cvs == null) {
+    if ('OffscreenCanvas' in window) {
+      cvs = new OffscreenCanvas(cvsWidth, cvsHeight)
+    } else {
+      throw new Error('Current browser does NOT support OffscreenCanvas, you have to provide a Canvas Object to render.')
+    }
+  } else {
+    cvs.width = paper.width / INCH2MM * precision
+    cvs.height = paper.height / INCH2MM * precision
+  }
+
+  const ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D = cvs.getContext('2d')!
 
   // 转换数据, 因为有的是毫米单位, 应转为px
   const fontSize = data.fontSize / INCH2MM * precision
@@ -93,10 +124,10 @@ export const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
   const rowShift = data.rowShift / INCH2MM * precision
 
   // 获取最长的那个边, 然后以那个长度的两倍值作为实际的文本绘制区域, 这样在旋转的时候就不会出现空白的地方了
-  const textBoxWidth = Math.max(cvs.width, cvs.height) * 2
+  const textBoxWidth = Math.max(cvsWidth, cvsHeight) * 2
 
   // 画布高宽一半的值
-  const cvsHalfWidth = cvs.width / 2, cvsHalfHeight = cvs.height / 2
+  const cvsHalfWidth = cvsWidth / 2, cvsHalfHeight = cvsHeight / 2
   // 新的原点
   const originX = -textBoxWidth / 2, originY = -textBoxWidth / 2
 
@@ -106,7 +137,7 @@ export const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
 
   // 添加图片
   if (data.image) {
-    ctx.drawImage(data.image, 0, 0, cvs.width, cvs.height)
+    ctx.drawImage(data.image, 0, 0, cvsWidth, cvsHeight)
   }
   // 设置当前光标到画布的中心
   ctx.translate(cvsHalfWidth, cvsHalfHeight)
@@ -141,4 +172,6 @@ export const draw = (cvs: HTMLCanvasElement, data: RenderingData) => {
 
     currentX += textWidth + rowSpace
   }
+
+  return cvs
 }
